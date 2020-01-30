@@ -4,8 +4,6 @@
 # CI logs.
 set -e
 
-IMAGE_ARCH=("amd64" "arm64")
-
 CONTAINER_SHA=$(git log -1 --pretty=format:"%H" .)
 
 echo "Building envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}"
@@ -19,33 +17,16 @@ CONTAINER_TAG=${CONTAINER_SHA} ./docker_build.sh
 if [[ "${SOURCE_BRANCH}" == "refs/heads/master" ]]; then
     docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
 
-    for arch in "${IMAGE_ARCH[@]}"
-    do
-        docker push envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}-${arch}
-    done
-
-    docker manifest create envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA} \
-	    envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}-arm64 \
-	    envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}-amd64
-
-    for arch in "${IMAGE_ARCH[@]}"
-    do
-        docker manifest annotate envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA} \
-		envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}-${arch} \
-		--os linux --arch ${arch}
-    done
-
-    docker manifest push envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}
+    docker push envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}
 
     if [[ "${LINUX_DISTRO}" == "ubuntu" ]]; then
         echo ${GCP_SERVICE_ACCOUNT_KEY} | base64 --decode | gcloud auth activate-service-account --key-file=-
         gcloud auth configure-docker --quiet
 
         echo "Updating gcr.io/envoy-ci/envoy-build image"
-        docker tag envoyproxy/envoy-build-"${LINUX_DISTRO}":"${CONTAINER_SHA}-${arch}" gcr.io/envoy-ci/envoy-build:"${CONTAINER_SHA}-${arch}"
-        docker push gcr.io/envoy-ci/envoy-build:"${CONTAINER_SHA}-${arch}"
+        docker tag envoyproxy/envoy-build-"${LINUX_DISTRO}":"${CONTAINER_SHA}" gcr.io/envoy-ci/envoy-build:"${CONTAINER_SHA}"
+        docker push gcr.io/envoy-ci/envoy-build:"${CONTAINER_SHA}"
     fi
-
 else
     echo 'Ignoring PR branch for docker push.'
 fi
