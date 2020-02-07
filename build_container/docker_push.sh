@@ -27,15 +27,15 @@ if [[ "${SOURCE_BRANCH}" == "refs/heads/master" ]]; then
         docker push envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}-${arch}
     done
 
-    docker manifest create --amend envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA} \
-	    envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}-arm64 \
-	    envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}-amd64
+    docker manifest create envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA} \
+        envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}-arm64 \
+        envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}-amd64
 
     for arch in "${IMAGE_ARCH[@]}"
     do
         docker manifest annotate envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA} \
-		envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}-${arch} \
-		--os linux --arch ${arch}
+            envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}-${arch} \
+            --os linux --arch ${arch}
     done
 
     docker manifest push envoyproxy/envoy-build-${LINUX_DISTRO}:${CONTAINER_SHA}
